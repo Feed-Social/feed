@@ -1442,11 +1442,13 @@
                 .from('profiles')
                 .select('*')
                 .eq('id', currentUser.id)
-                .single();
+                .maybeSingle();
             
             if (data) {
                 currentUserProfile = data;
                 updateProfileUI();
+            } else if (error) {
+                console.error('Error loading profile:', error);
             }
         }
 
@@ -1585,7 +1587,12 @@
 
             let query = SupabaseClient
                 .from('posts')
-                .select('*, profiles:user_id (username, full_name, verification_badge), likes(user_id), comments(id, content, created_at, profiles:user_id (username, full_name))')
+                .select(`
+                    *,
+                    profiles:user_id (username, full_name, verification_badge),
+                    likes (user_id),
+                    comments (id, content, created_at, profiles:user_id (username, full_name))
+                `)
                 .order('created_at', { ascending: false });
 
             if (filterHashtag) {
@@ -1595,6 +1602,12 @@
             const { data, error } = await query;
 
             document.getElementById('loadingSpinner').style.display = 'none';
+
+            if (error) {
+                console.error('Error loading posts:', error);
+                showToast('Error loading posts');
+                return;
+            }
 
             if (data && data.length > 0) {
                 posts = data.map(post => ({
@@ -1723,6 +1736,7 @@
                     .single();
 
                 if (error) {
+                    console.error('Error creating post:', error);
                     showToast('Error creating post: ' + error.message);
                 } else {
                     input.value = '';
@@ -1962,9 +1976,57 @@
             }, 3000);
         }
 
-        function toggleFollow(button) {
-            button.classList.toggle('following');
-            button.textContent = button.classList.contains('following') ? 'Following' : 'Follow';
+        async function toggleFollow(button) {
+            if (!currentUser) {
+                showToast('Please sign in to follow users');
+                return;
+            }
+
+            const isFollowing = button.classList.contains('following');
+            const suggestionInfo = button.parentElement.querySelector('.suggestion-info');
+            const handle = suggestionInfo.querySelector('.suggestion-handle').textContent;
+            const username = handle.replace('@', '');
+
+            // Get the profile ID of the user to follow
+            const { data: profileData } = await SupabaseClient
+                .from('profiles')
+                .select('id')
+                .eq('username', username)
+                .single();
+
+            if (!profileData) {
+                showToast('Error finding user');
+                return;
+            }
+
+            if (isFollowing) {
+                // Unfollow
+                const { error } = await SupabaseClient
+                    .from('follows')
+                    .delete()
+                    .eq('follower_id', currentUser.id)
+                    .eq('following_id', profileData.id);
+
+                if (!error) {
+                    button.classList.remove('following');
+                    button.textContent = 'Follow';
+                    showToast('Unfollowed @' + username);
+                }
+            } else {
+                // Follow
+                const { error } = await SupabaseClient
+                    .from('follows')
+                    .insert({
+                        follower_id: currentUser.id,
+                        following_id: profileData.id
+                    });
+
+                if (!error) {
+                    button.classList.add('following');
+                    button.textContent = 'Following';
+                    showToast('Following @' + username);
+                }
+            }
         }
 
         function toggleComments(postId) {
