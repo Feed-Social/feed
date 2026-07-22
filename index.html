@@ -1629,51 +1629,99 @@
 
             let query = SupabaseClient
                 .from('posts')
-                .select(`
-                    *,
-                    profiles:user_id (username, full_name, verification_badge),
-                    likes (user_id),
-                    comments (id, content, created_at, profiles:user_id (username, full_name))
-                `)
+                .select('*')
                 .order('created_at', { ascending: false });
 
             if (filterHashtag) {
                 query = query.ilike('content', '%' + filterHashtag + '%');
             }
 
-            const { data, error } = await query;
+            const { data: postsData, error: postsError } = await query;
 
-            document.getElementById('loadingSpinner').style.display = 'none';
-
-            if (error) {
-                console.error('Error loading posts:', error);
+            if (postsError) {
+                console.error('Error loading posts:', postsError);
                 showToast('Error loading posts');
+                document.getElementById('loadingSpinner').style.display = 'none';
                 return;
             }
 
-            if (data && data.length > 0) {
-                posts = data.map(post => ({
-                    ...post,
-                    author: post.profiles.full_name || post.profiles.username,
-                    handle: '@' + post.profiles.username,
-                    avatar: getInitials(post.profiles.full_name || post.profiles.username),
-                    verification_badge: post.profiles.verification_badge,
-                    time: formatTime(post.created_at),
-                    liked: post.likes.some(like => like.user_id === currentUser?.id),
-                    comments: post.comments.map(comment => ({
-                        id: comment.id,
-                        author: comment.profiles.full_name || comment.profiles.username,
-                        avatar: getInitials(comment.profiles.full_name || comment.profiles.username),
-                        text: comment.content
-                    }))
-                }));
-                document.getElementById('postsContainer').style.display = 'block';
-                renderPosts();
-            } else {
+            if (!postsData || postsData.length === 0) {
+                document.getElementById('loadingSpinner').style.display = 'none';
                 document.getElementById('emptyState').style.display = 'block';
                 document.getElementById('emptyState').querySelector('h2').textContent = filterHashtag ? 'No results' : 'No posts yet';
                 document.getElementById('emptyState').querySelector('p').textContent = filterHashtag ? 'Try a different hashtag' : 'Be the first to post!';
+                return;
             }
+
+            // Get all user IDs from posts
+            const userIds = [...new Set(postsData.map(post => post.user_id))];
+            
+            // Fetch profiles for all users
+            const { data: profilesData } = await SupabaseClient
+                .from('profiles')
+                .select('*')
+                .in('id', userIds);
+
+            const profilesMap = {};
+            profilesData.forEach(profile => {
+                profilesMap[profile.id] = profile;
+            });
+
+            // Fetch likes for all posts
+            const postIds = postsData.map(post => post.id);
+            const { data: likesData } = await SupabaseClient
+                .from('likes')
+                .select('*')
+                .in('post_id', postIds);
+
+            const likesMap = {};
+            likesData.forEach(like => {
+                if (!likesMap[like.post_id]) {
+                    likesMap[like.post_id] = [];
+                }
+                likesMap[like.post_id].push(like.user_id);
+            });
+
+            // Fetch comments for all posts
+            const { data: commentsData } = await SupabaseClient
+                .from('comments')
+                .select('*')
+                .in('post_id', postIds);
+
+            const commentsMap = {};
+            commentsData.forEach(comment => {
+                if (!commentsMap[comment.post_id]) {
+                    commentsMap[comment.post_id] = [];
+                }
+                commentsMap[comment.post_id].push(comment);
+            });
+
+            document.getElementById('loadingSpinner').style.display = 'none';
+
+            posts = postsData.map(post => {
+                const profile = profilesMap[post.user_id] || {};
+                const postLikes = likesMap[post.id] || [];
+                const postComments = commentsMap[post.id] || [];
+
+                return {
+                    ...post,
+                    author: profile.full_name || profile.username,
+                    handle: '@' + profile.username,
+                    avatar: getInitials(profile.full_name || profile.username),
+                    verification_badge: profile.verification_badge,
+                    time: formatTime(post.created_at),
+                    liked: postLikes.includes(currentUser?.id),
+                    comments: postComments.map(comment => ({
+                        id: comment.id,
+                        author: profilesMap[comment.user_id]?.full_name || profilesMap[comment.user_id]?.username || 'Unknown',
+                        avatar: getInitials(profilesMap[comment.user_id]?.full_name || profilesMap[comment.user_id]?.username || 'Unknown'),
+                        text: comment.content
+                    }))
+                };
+            });
+
+            document.getElementById('postsContainer').style.display = 'block';
+            renderPosts();
         }
 
         function formatTime(dateString) {
