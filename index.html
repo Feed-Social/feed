@@ -1305,55 +1305,96 @@
 
                 <!-- Explore Panel -->
                 <div id="explorePanel" class="view-panel">
-                    <div class="placeholder-panel">
-                        <i data-lucide="compass"></i>
-                        <h2>Explore</h2>
-                        <p>Discover new content and trending topics</p>
+                    <h2 style="padding: 20px;">Explore</h2>
+                    <div class="trending" style="margin: 20px;">
+                        <h3>Trending Topics</h3>
+                        <div class="trending-item" onclick="filterByHashtag('#TechNews')" style="cursor: pointer;">
+                            <div class="trending-topic">#TechNews</div>
+                            <div class="trending-posts">12.5K posts</div>
+                        </div>
+                        <div class="trending-item" onclick="filterByHashtag('#WebDevelopment')" style="cursor: pointer;">
+                            <div class="trending-topic">#WebDevelopment</div>
+                            <div class="trending-posts">8.2K posts</div>
+                        </div>
+                        <div class="trending-item" onclick="filterByHashtag('#AI')" style="cursor: pointer;">
+                            <div class="trending-topic">#AI</div>
+                            <div class="trending-posts">15.8K posts</div>
+                        </div>
+                        <div class="trending-item" onclick="filterByHashtag('#Coding')" style="cursor: pointer;">
+                            <div class="trending-topic">#Coding</div>
+                            <div class="trending-posts">6.3K posts</div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Notifications Panel -->
                 <div id="notificationsPanel" class="view-panel">
-                    <div class="placeholder-panel">
-                        <i data-lucide="bell"></i>
-                        <h2>Notifications</h2>
-                        <p>Stay updated with your activity</p>
+                    <h2 style="padding: 20px;">Notifications</h2>
+                    <div id="notificationsList" style="padding: 20px;">
+                        <p style="color: var(--color-muted);">No new notifications</p>
                     </div>
                 </div>
 
                 <!-- Messages Panel -->
                 <div id="messagesPanel" class="view-panel">
-                    <div class="placeholder-panel">
-                        <i data-lucide="mail"></i>
-                        <h2>Messages</h2>
-                        <p>Connect with others privately</p>
+                    <h2 style="padding: 20px;">Messages</h2>
+                    <div id="messagesList" style="padding: 20px;">
+                        <p style="color: var(--color-muted);">No messages yet</p>
                     </div>
                 </div>
 
                 <!-- Bookmarks Panel -->
                 <div id="bookmarksPanel" class="view-panel">
-                    <div class="placeholder-panel">
-                        <i data-lucide="bookmark"></i>
-                        <h2>Bookmarks</h2>
-                        <p>Save posts to read later</p>
+                    <h2 style="padding: 20px;">Bookmarks</h2>
+                    <div id="bookmarksList" style="padding: 20px;">
+                        <p style="color: var(--color-muted);">No bookmarks yet</p>
                     </div>
                 </div>
 
                 <!-- Profile Panel -->
                 <div id="profilePanel" class="view-panel">
-                    <div class="placeholder-panel">
-                        <i data-lucide="user"></i>
-                        <h2>Profile</h2>
-                        <p>View and edit your profile</p>
+                    <div style="padding: 20px;">
+                        <div class="profile-card" style="margin-bottom: 20px;">
+                            <div class="profile-avatar" id="profilePageAvatar">JD</div>
+                            <div class="profile-name" id="profilePageName">John Doe</div>
+                            <div class="profile-handle" id="profilePageHandle">@johndoe</div>
+                            <div class="profile-stats">
+                                <div class="stat">
+                                    <div class="stat-number" id="profilePagePosts">0</div>
+                                    <div class="stat-label">Posts</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-number" id="profilePageFollowers">0</div>
+                                    <div class="stat-label">Followers</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-number" id="profilePageFollowing">0</div>
+                                    <div class="stat-label">Following</div>
+                                </div>
+                            </div>
+                        </div>
+                        <h3>Your Posts</h3>
+                        <div id="userPostsContainer"></div>
                     </div>
                 </div>
 
                 <!-- Settings Panel -->
                 <div id="settingsPanel" class="view-panel">
-                    <div class="placeholder-panel">
-                        <i data-lucide="settings"></i>
-                        <h2>Settings</h2>
-                        <p>Manage your account preferences</p>
+                    <h2 style="padding: 20px;">Settings</h2>
+                    <div style="padding: 20px;">
+                        <div style="margin-bottom: 20px;">
+                            <h3>Account</h3>
+                            <p>Logged in as: <span id="settingsEmail"></span></p>
+                            <button class="post-btn" onclick="signOut()" style="margin-top: 10px;">Sign Out</button>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <h3>Profile</h3>
+                            <div style="margin-bottom: 10px;">
+                                <label>Full Name:</label>
+                                <input type="text" id="settingsFullName" class="auth-input" style="width: 100%; max-width: 300px;">
+                            </div>
+                            <button class="post-btn" onclick="updateProfile()">Update Profile</button>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -1533,7 +1574,8 @@
             const { data, error } = await SupabaseClient.auth.signInWithOAuth({
                 provider: 'github',
                 options: {
-                    redirectTo: window.location.href
+                    redirectTo: window.location.href,
+                    scopes: 'read:user user:email'
                 }
             });
 
@@ -1959,6 +2001,99 @@
             const navLink = document.querySelector('.nav-links a[onclick="switchView(\'' + viewName + '\', event)"]');
             if (navLink) {
                 navLink.style.fontWeight = '600';
+            }
+
+            // Load data for specific views
+            if (viewName === 'profile') {
+                loadProfilePage();
+            } else if (viewName === 'settings') {
+                loadSettingsPage();
+            }
+        }
+
+        async function loadProfilePage() {
+            if (!currentUserProfile) return;
+
+            document.getElementById('profilePageAvatar').textContent = getInitials(currentUserProfile.full_name || currentUserProfile.username);
+            document.getElementById('profilePageName').textContent = currentUserProfile.full_name || currentUserProfile.username;
+            document.getElementById('profilePageHandle').textContent = '@' + currentUserProfile.username;
+
+            // Load user's posts
+            const { data: userPosts } = await SupabaseClient
+                .from('posts')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
+
+            document.getElementById('profilePagePosts').textContent = userPosts?.length || 0;
+
+            // Load follower/following counts
+            const { count: followersCount } = await SupabaseClient
+                .from('follows')
+                .select('*', { count: 'exact', head: true })
+                .eq('following_id', currentUser.id);
+
+            const { count: followingCount } = await SupabaseClient
+                .from('follows')
+                .select('*', { count: 'exact', head: true })
+                .eq('follower_id', currentUser.id);
+
+            document.getElementById('profilePageFollowers').textContent = followersCount || 0;
+            document.getElementById('profilePageFollowing').textContent = followingCount || 0;
+
+            // Render user's posts
+            if (userPosts && userPosts.length > 0) {
+                const container = document.getElementById('userPostsContainer');
+                container.innerHTML = '';
+                userPosts.forEach(post => {
+                    const postElement = document.createElement('div');
+                    postElement.className = 'post';
+                    postElement.innerHTML = '<div class="post-header">' +
+                        '<div class="post-avatar">' + getInitials(currentUserProfile.full_name || currentUserProfile.username) + '</div>' +
+                        '<div class="post-info">' +
+                        '<div class="post-author">' + (currentUserProfile.full_name || currentUserProfile.username) + '</div>' +
+                        '<div class="post-time">@' + currentUserProfile.username + ' · ' + formatTime(post.created_at) + '</div>' +
+                        '</div>' +
+                        '</div>' +
+                        '<div class="post-content">' + post.content + '</div>' +
+                        '<div class="post-stats">' +
+                        '<span>' + post.likes_count + ' likes</span>' +
+                        '<span>' + post.comments_count + ' comments</span>' +
+                        '</div>';
+                    container.appendChild(postElement);
+                });
+            } else {
+                document.getElementById('userPostsContainer').innerHTML = '<p style="color: var(--color-muted); padding: 20px;">No posts yet</p>';
+            }
+        }
+
+        async function loadSettingsPage() {
+            if (!currentUser) return;
+
+            document.getElementById('settingsEmail').textContent = currentUser.email;
+            document.getElementById('settingsFullName').value = currentUserProfile?.full_name || '';
+        }
+
+        async function updateProfile() {
+            const fullName = document.getElementById('settingsFullName').value.trim();
+
+            if (!fullName) {
+                showToast('Please enter a name');
+                return;
+            }
+
+            const { error } = await SupabaseClient
+                .from('profiles')
+                .update({ full_name: fullName })
+                .eq('id', currentUser.id);
+
+            if (error) {
+                showToast('Error updating profile: ' + error.message);
+            } else {
+                showToast('Profile updated successfully');
+                currentUserProfile.full_name = fullName;
+                updateProfileUI();
+                loadProfilePage();
             }
         }
 
