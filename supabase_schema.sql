@@ -15,6 +15,7 @@ CREATE TABLE public.posts (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
     content TEXT NOT NULL,
+    media_url TEXT,
     likes_count INTEGER DEFAULT 0 NOT NULL,
     comments_count INTEGER DEFAULT 0 NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -37,6 +38,16 @@ CREATE TABLE public.comments (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Follows table
+CREATE TABLE public.follows (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    follower_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    following_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE(follower_id, following_id),
+    CHECK (follower_id != following_id)
+);
+
 -- Indexes for performance
 CREATE INDEX idx_posts_user_id ON public.posts(user_id);
 CREATE INDEX idx_posts_created_at ON public.posts(created_at DESC);
@@ -44,6 +55,8 @@ CREATE INDEX idx_likes_post_id ON public.likes(post_id);
 CREATE INDEX idx_likes_user_id ON public.likes(user_id);
 CREATE INDEX idx_comments_post_id ON public.comments(post_id);
 CREATE INDEX idx_comments_user_id ON public.comments(user_id);
+CREATE INDEX idx_follows_follower_id ON public.follows(follower_id);
+CREATE INDEX idx_follows_following_id ON public.follows(following_id);
 
 -- Function to generate unique username (handles duplicates)
 CREATE OR REPLACE FUNCTION public.generate_unique_username(base_username TEXT)
@@ -179,6 +192,15 @@ CREATE POLICY "Authenticated users can create comments" ON public.comments
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own comments" ON public.comments
     FOR DELETE USING (auth.uid() = user_id);
+
+-- Follows: Anyone can read, only authenticated can create/delete own follows
+ALTER TABLE public.follows ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Follows are viewable by everyone" ON public.follows
+    FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can create follows" ON public.follows
+    FOR INSERT WITH CHECK (auth.uid() = follower_id);
+CREATE POLICY "Users can delete own follows" ON public.follows
+    FOR DELETE USING (auth.uid() = follower_id);
 
 -- Seed data
 -- Create sample profiles (these will need actual auth.users IDs, so we'll use placeholders)
