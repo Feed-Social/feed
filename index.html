@@ -1514,6 +1514,19 @@
         // Handle hash-based modal opening
         window.addEventListener('hashchange', function() {
             const hash = window.location.hash;
+            
+            // Clean up multiple or empty hashes
+            if (hash.includes('#') && hash !== '#' && !hash.match(/^#[a-z-]+$/)) {
+                const validHash = hash.match(/#[a-z-]+/);
+                if (validHash) {
+                    window.location.hash = validHash[0];
+                    return;
+                } else {
+                    window.location.hash = '';
+                    return;
+                }
+            }
+            
             if (hash) {
                 const modalMap = {
                     '#terms': 'termsModal',
