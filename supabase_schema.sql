@@ -1,78 +1,98 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Users table (extends auth.users with additional profile data)
+-- Profiles table
 CREATE TABLE public.profiles (
     id UUID REFERENCES auth.users(id) PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
     full_name TEXT,
-    avatar_url TEXT,
     verification_badge TEXT CHECK (verification_badge IN ('blue', 'gold', NULL)),
-    bio TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- Posts table
 CREATE TABLE public.posts (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
     content TEXT NOT NULL,
-    image_url TEXT,
     likes_count INTEGER DEFAULT 0 NOT NULL,
     comments_count INTEGER DEFAULT 0 NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Likes table
+CREATE TABLE public.likes (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    post_id UUID REFERENCES public.posts(id) ON DELETE CASCADE NOT NULL,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    UNIQUE(post_id, user_id)
 );
 
 -- Comments table
 CREATE TABLE public.comments (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     post_id UUID REFERENCES public.posts(id) ON DELETE CASCADE NOT NULL,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
     content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Likes table (for tracking who liked what)
-CREATE TABLE public.likes (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    post_id UUID REFERENCES public.posts(id) ON DELETE CASCADE NOT NULL,
-    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    UNIQUE(post_id, user_id)
-);
-
--- Follows table
-CREATE TABLE public.follows (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    follower_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-    following_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    UNIQUE(follower_id, following_id),
-    CHECK (follower_id != following_id)
-);
-
--- Indexes for better performance
+-- Indexes for performance
 CREATE INDEX idx_posts_user_id ON public.posts(user_id);
 CREATE INDEX idx_posts_created_at ON public.posts(created_at DESC);
-CREATE INDEX idx_comments_post_id ON public.comments(post_id);
-CREATE INDEX idx_comments_user_id ON public.comments(user_id);
 CREATE INDEX idx_likes_post_id ON public.likes(post_id);
 CREATE INDEX idx_likes_user_id ON public.likes(user_id);
-CREATE INDEX idx_follows_follower_id ON public.follows(follower_id);
-CREATE INDEX idx_follows_following_id ON public.follows(following_id);
+CREATE INDEX idx_comments_post_id ON public.comments(post_id);
+CREATE INDEX idx_comments_user_id ON public.comments(user_id);
 
--- Function to handle new user signup
+-- Function to generate unique username (handles duplicates)
+CREATE OR REPLACE FUNCTION public.generate_unique_username(base_username TEXT)
+RETURNS TEXT AS $$
+DECLARE
+    final_username TEXT;
+    suffix INTEGER := 1;
+BEGIN
+    final_username := base_username;
+    
+    -- Check if username exists, if so append random suffix
+    WHILE EXISTS (SELECT 1 FROM public.profiles WHERE username = final_username) LOOP
+        final_username := base_username || suffix;
+        suffix := suffix + 1;
+    END LOOP;
+    
+    RETURN final_username;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to handle new user signup with duplicate username handling
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+    base_username TEXT;
+    unique_username TEXT;
 BEGIN
+    -- Get base username from email prefix or full_name from metadata
+    IF NEW.raw_user_meta_data ? 'full_name' AND NEW.raw_user_meta_data->>'full_name' IS NOT NULL THEN
+        base_username := lower(regexp_replace(NEW.raw_user_meta_data->>'full_name', '[^a-zA-Z0-9]', '', 'g'));
+    ELSE
+        base_username := split_part(NEW.email, '@', 1);
+    END IF;
+    
+    -- Ensure username isn't empty
+    IF base_username = '' THEN
+        base_username := 'user';
+    END IF;
+    
+    -- Generate unique username
+    unique_username := public.generate_unique_username(base_username);
+    
     INSERT INTO public.profiles (id, username, full_name)
     VALUES (
         NEW.id,
-        split_part(NEW.email, '@', 1),
+        unique_username,
         COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1))
     );
+    
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -81,67 +101,6 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
--- Function to update updated_at timestamp
-CREATE OR REPLACE FUNCTION public.update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = timezone('utc'::text, now());
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Triggers for updated_at
-CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles
-    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-CREATE TRIGGER update_posts_updated_at BEFORE UPDATE ON public.posts
-    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
--- Row Level Security (RLS) Policies
-
--- Profiles: Everyone can read, only own user can update
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Profiles are viewable by everyone" ON public.profiles
-    FOR SELECT USING (true);
-CREATE POLICY "Users can update own profile" ON public.profiles
-    FOR UPDATE USING (auth.uid() = id);
-
--- Posts: Everyone can read, only authenticated can create, only owner can delete
-ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Posts are viewable by everyone" ON public.posts
-    FOR SELECT USING (true);
-CREATE POLICY "Authenticated users can create posts" ON public.posts
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can delete own posts" ON public.posts
-    FOR DELETE USING (auth.uid() = user_id);
-
--- Comments: Everyone can read, only authenticated can create, only owner can delete
-ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Comments are viewable by everyone" ON public.comments
-    FOR SELECT USING (true);
-CREATE POLICY "Authenticated users can create comments" ON public.comments
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can delete own comments" ON public.comments
-    FOR DELETE USING (auth.uid() = user_id);
-
--- Likes: Everyone can read, only authenticated can create/delete own likes
-ALTER TABLE public.likes ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Likes are viewable by everyone" ON public.likes
-    FOR SELECT USING (true);
-CREATE POLICY "Authenticated users can create likes" ON public.likes
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can delete own likes" ON public.likes
-    FOR DELETE USING (auth.uid() = user_id);
-
--- Follows: Everyone can read, only authenticated can create/delete own follows
-ALTER TABLE public.follows ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Follows are viewable by everyone" ON public.follows
-    FOR SELECT USING (true);
-CREATE POLICY "Authenticated users can create follows" ON public.follows
-    FOR INSERT WITH CHECK (auth.uid() = follower_id);
-CREATE POLICY "Users can delete own follows" ON public.follows
-    FOR DELETE USING (auth.uid() = follower_id);
 
 -- Function to update post likes count
 CREATE OR REPLACE FUNCTION public.update_post_likes_count()
@@ -184,3 +143,50 @@ CREATE TRIGGER on_comment_insert AFTER INSERT ON public.comments
 
 CREATE TRIGGER on_comment_delete AFTER DELETE ON public.comments
     FOR EACH ROW EXECUTE FUNCTION public.update_post_comments_count();
+
+-- Row Level Security (RLS) Policies
+
+-- Profiles: Anyone can read, only authenticated can update own profile
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Profiles are viewable by everyone" ON public.profiles
+    FOR SELECT USING (true);
+CREATE POLICY "Users can update own profile" ON public.profiles
+    FOR UPDATE USING (auth.uid() = id);
+
+-- Posts: Anyone can read, only authenticated can create/delete own posts
+ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Posts are viewable by everyone" ON public.posts
+    FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can create posts" ON public.posts
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own posts" ON public.posts
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- Likes: Anyone can read, only authenticated can create/delete own likes
+ALTER TABLE public.likes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Likes are viewable by everyone" ON public.likes
+    FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can create likes" ON public.likes
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own likes" ON public.likes
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- Comments: Anyone can read, only authenticated can create/delete own comments
+ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Comments are viewable by everyone" ON public.comments
+    FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can create comments" ON public.comments
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own comments" ON public.comments
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- Seed data
+-- Create sample profiles (these will need actual auth.users IDs, so we'll use placeholders)
+-- Note: In production, you'd create actual users via auth, then insert their profiles
+-- For testing, you can manually insert after creating users via the Supabase dashboard
+
+-- Sample posts (after creating users, replace the UUIDs with actual user IDs)
+-- INSERT INTO public.posts (user_id, content, likes_count, comments_count) VALUES
+-- ('<user-uuid-1>', 'Just joined Feed! Excited to be here. #HelloWorld', 5, 2),
+-- ('<user-uuid-2>', 'Working on a new project. Can''t wait to share it with everyone! 🚀', 12, 4),
+-- ('<user-uuid-1>', 'Beautiful sunset today. Sometimes you need to stop and appreciate the little things. 🌅', 8, 3);
