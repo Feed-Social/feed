@@ -882,6 +882,70 @@
             text-decoration: underline;
         }
 
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 40px;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-family: 'Inter', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .modal-body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: #374151;
+        }
+
+        .modal-body h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 20px 0 12px;
+        }
+
+        .modal-body p {
+            margin-bottom: 16px;
+        }
+
         @media (max-width: 900px) {
             .auth-split {
                 flex-direction: column;
@@ -934,14 +998,11 @@
                         <span>now.</span>
                     </h1>
                     <div class="auth-btn-stack">
-                        <button class="auth-social-btn black">
-                            <i data-lucide="phone"></i> Continue with phone
+                        <button class="auth-social-btn white">
+                            <i data-lucide="github"></i> Continue with GitHub
                         </button>
                         <button class="auth-social-btn white">
-                            <i data-lucide="mail"></i> Continue with Google
-                        </button>
-                        <button class="auth-social-btn white">
-                            <i data-lucide="apple"></i> Continue with Apple
+                            <i data-lucide="mail"></i> Continue with email
                         </button>
                         
                         <div class="auth-divider">
@@ -956,15 +1017,16 @@
                         <button class="auth-continue-btn" id="continueBtn" onclick="showPassword()">Continue</button>
                         
                         <div class="auth-legal">
-                            By continuing, you agree to our <a href="#">Terms of Service</a>, <a href="#">Privacy Policy</a> and <a href="#">Cookie Use</a>.
+                            By continuing, you agree to our <a href="#terms">Terms of Service</a>, <a href="#privacy">Privacy Policy</a> and <a href="#cookies">Cookie Use</a>.
                         </div>
                     </div>
                 </div>
                 <div class="auth-right">
                     <div class="auth-brand-logo">
                         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="100" cy="100" r="90" fill="none" stroke="#000" stroke-width="8"/>
-                            <path d="M70 60 L70 140 L130 140 L130 100 L90 100 L90 60 Z" fill="#000"/>
+                            <circle cx="100" cy="100" r="95" fill="none" stroke="#000" stroke-width="6"/>
+                            <path d="M65 65 L65 135 L135 135 L135 100 L95 100 L95 65 Z" fill="#000"/>
+                            <path d="M95 65 L95 100 L135 100" stroke="#000" stroke-width="6" fill="none"/>
                         </svg>
                     </div>
                 </div>
@@ -972,18 +1034,18 @@
             
             <div class="auth-footer">
                 <div class="auth-footer-links">
-                    <a href="#">About</a> ·
-                    <a href="#">Get App</a> ·
-                    <a href="#">Help</a> ·
-                    <a href="#">Terms</a> ·
-                    <a href="#">Privacy</a> ·
-                    <a href="#">Cookies</a> ·
-                    <a href="#">Careers</a> ·
-                    <a href="#">Ads & Business</a> ·
-                    <a href="#">Developers</a> ·
-                    <a href="#">News</a> ·
-                    <a href="#">Accessibility</a> ·
-                    © 2026 Feed Corp
+                    <a href="#about">About</a> ·
+                    <a href="#get-app">Get App</a> ·
+                    <a href="#help">Help</a> ·
+                    <a href="#terms">Terms</a> ·
+                    <a href="#privacy">Privacy</a> ·
+                    <a href="#cookies">Cookies</a> ·
+                    <a href="#careers">Careers</a> ·
+                    <a href="#ads">Ads & Business</a> ·
+                    <a href="#developers">Developers</a> ·
+                    <a href="#news">News</a> ·
+                    <a href="#accessibility">Accessibility</a> ·
+                    © 2026 James Theakston
                 </div>
             </div>
         </div>
@@ -1430,6 +1492,227 @@
         // Initialize on load
         checkSession();
         lucide.createIcons();
+
+        // Modal functionality
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        // Handle hash-based modal opening
+        window.addEventListener('hashchange', function() {
+            const hash = window.location.hash;
+            if (hash) {
+                const modalMap = {
+                    '#terms': 'termsModal',
+                    '#privacy': 'privacyModal',
+                    '#cookies': 'cookiesModal',
+                    '#about': 'aboutModal',
+                    '#get-app': 'getAppModal',
+                    '#help': 'helpModal',
+                    '#careers': 'careersModal',
+                    '#ads': 'adsModal',
+                    '#developers': 'developersModal',
+                    '#news': 'newsModal',
+                    '#accessibility': 'accessibilityModal'
+                };
+                const modalId = modalMap[hash];
+                if (modalId) {
+                    openModal(modalId);
+                }
+            }
+        });
+
+        // Close modals on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.show').forEach(modal => {
+                    modal.classList.remove('show');
+                });
+            }
+        });
+
+        // Close modals when clicking outside
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.classList.remove('show');
+                }
+            });
+        });
     </script>
+
+    <!-- Modals -->
+    <div id="termsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Terms of Service</h2>
+                <button class="modal-close" onclick="closeModal('termsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h2>1. Acceptance of Terms</h2>
+                <p>By accessing and using Feed, you accept and agree to be bound by the terms and provision of this agreement.</p>
+                <h2>2. Privacy Policy</h2>
+                <p>Your use of Feed is also subject to our Privacy Policy. Please review our Privacy Policy, which also governs the Service.</p>
+                <h2>3. User Accounts</h2>
+                <p>You are responsible for maintaining the confidentiality of your account and password and for restricting access to your computer.</p>
+                <h2>4. Content</h2>
+                <p>You retain all rights to any content you post on Feed. By posting content, you grant Feed a worldwide, non-exclusive, royalty-free license.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="privacyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Privacy Policy</h2>
+                <button class="modal-close" onclick="closeModal('privacyModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h2>1. Information We Collect</h2>
+                <p>We collect information you provide directly to us, such as when you create an account, post content, or communicate with us.</p>
+                <h2>2. How We Use Your Information</h2>
+                <p>We use the information we collect to provide, maintain, and improve our services, and to communicate with you.</p>
+                <h2>3. Information Sharing</h2>
+                <p>We do not sell your personal information. We may share information in limited circumstances.</p>
+                <h2>4. Data Security</h2>
+                <p>We implement appropriate security measures to protect your personal information.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="cookiesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Cookie Policy</h2>
+                <button class="modal-close" onclick="closeModal('cookiesModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h2>1. What Are Cookies</h2>
+                <p>Cookies are small text files that are placed on your device when you visit our website.</p>
+                <h2>2. How We Use Cookies</h2>
+                <p>We use cookies to remember your preferences, analyze site traffic, and personalize content.</p>
+                <h2>3. Managing Cookies</h2>
+                <p>You can control and manage cookies in various ways, including through your browser settings.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="aboutModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">About Feed</h2>
+                <button class="modal-close" onclick="closeModal('aboutModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Feed is a social media platform designed for real-time conversations and content sharing. Built with modern technology and a focus on user experience.</p>
+                <p>Our mission is to connect people through meaningful conversations and shared experiences.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="getAppModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Get the App</h2>
+                <button class="modal-close" onclick="closeModal('getAppModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Download Feed for your mobile device:</p>
+                <p><strong>iOS:</strong> Available on the App Store</p>
+                <p><strong>Android:</strong> Available on Google Play</p>
+                <p>Stay connected wherever you go with the Feed mobile app.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Help Center</h2>
+                <button class="modal-close" onclick="closeModal('helpModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h2>Common Issues</h2>
+                <p><strong>Can't log in?</strong> Try resetting your password or contact support.</p>
+                <p><strong>Account suspended?</strong> Review our community guidelines and appeal if necessary.</p>
+                <h2>Contact Support</h2>
+                <p>Email us at support@feed.com for additional assistance.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="careersModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Careers</h2>
+                <button class="modal-close" onclick="closeModal('careersModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Join our team and help build the future of social media.</p>
+                <p>Current openings: Engineering, Design, Product, Marketing, and more.</p>
+                <p>Email careers@feed.com to apply.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="adsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Ads & Business</h2>
+                <button class="modal-close" onclick="closeModal('adsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Grow your business with Feed advertising.</p>
+                <p>Reach your target audience with precision targeting and measurable results.</p>
+                <p>Contact business@feed.com for advertising inquiries.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="developersModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Developers</h2>
+                <button class="modal-close" onclick="closeModal('developersModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Build on the Feed platform with our API.</p>
+                <p>Access our developer documentation and tools to create integrations and applications.</p>
+                <p>Visit developers.feed.com for more information.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="newsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">News</h2>
+                <button class="modal-close" onclick="closeModal('newsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Stay updated with the latest from Feed.</p>
+                <p>Company announcements, product updates, and industry news.</p>
+                <p>Follow our official blog for the latest updates.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="accessibilityModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Accessibility</h2>
+                <button class="modal-close" onclick="closeModal('accessibilityModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Feed is committed to making our platform accessible to everyone.</p>
+                <p>We follow WCAG 2.1 guidelines and continuously improve our accessibility features.</p>
+                <p>Contact accessibility@feed.com with any accessibility concerns.</p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
