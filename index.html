@@ -904,7 +904,7 @@
                 document.querySelector('.profile-name').textContent = currentUserProfile.full_name || currentUserProfile.username;
                 document.querySelector('.profile-handle').textContent = '@' + currentUserProfile.username;
                 document.querySelector('.create-post-avatar').textContent = getInitials(currentUserProfile.full_name || currentUserProfile.username);
-                document.querySelector('.create-post-input').placeholder = `What's on your mind, ${currentUserProfile.full_name || currentUserProfile.username}?`;
+                document.querySelector('.create-post-input').placeholder = 'What\'s on your mind, ' + (currentUserProfile.full_name || currentUserProfile.username) + '?';
             }
         }
 
@@ -997,17 +997,7 @@
         async function loadPosts() {
             const { data, error } = await SupabaseClient
                 .from('posts')
-                .select(`
-                    *,
-                    profiles:user_id (username, full_name, verification_badge),
-                    likes(user_id),
-                    comments(
-                        id,
-                        content,
-                        created_at,
-                        profiles:user_id (username, full_name)
-                    )
-                )
+                .select('*, profiles:user_id (username, full_name, verification_badge), likes(user_id), comments(id, content, created_at, profiles:user_id (username, full_name))')
                 .order('created_at', { ascending: false });
 
             if (data) {
@@ -1058,48 +1048,55 @@
             for (const post of posts) {
                 const postElement = document.createElement('div');
                 postElement.className = 'post';
-                postElement.innerHTML = `
-                    <div class="post-header">
-                        <div class="post-avatar">${post.avatar}</div>
-                        <div class="post-info">
-                            <div class="post-author">${post.author}${getVerificationBadgeHTML(post.verification_badge)}</div>
-                            <div class="post-time">${post.handle} · ${post.time}</div>
-                        </div>
-                    </div>
-                    <div class="post-content">${post.content}</div>
-                    <div class="post-stats">
-                        <span>${post.likes_count} likes</span>
-                        <span>${post.comments_count} comments</span>
-                    </div>
-                    <div class="post-actions-row">
-                        <button class="post-action ${post.liked ? 'liked' : ''}" onclick="toggleLike('${post.id}')">
-                            <i data-feather="${post.liked ? 'heart' : 'heart'}"></i> Like
-                        </button>
-                        <button class="post-action" onclick="toggleComments('${post.id}')">
-                            <i data-feather="message-circle"></i> Comment
-                        </button>
-                        <button class="post-action">
-                            <i data-feather="share-2"></i> Share
-                        </button>
-                    </div>
-                    <div class="comments-section" id="comments-${post.id}">
-                        <div id="comments-list-${post.id}">
-                            ${post.comments.map(comment => `
-                                <div class="comment">
-                                    <div class="comment-avatar">${comment.avatar}</div>
-                                    <div class="comment-content">
-                                        <div class="comment-author">${comment.author}</div>
-                                        <div class="comment-text">${comment.text}</div>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div class="comment-input-container">
-                            <input type="text" class="comment-input" id="comment-input-${post.id}" placeholder="Write a comment...">
-                            <button class="comment-submit" onclick="addComment('${post.id}')">Post</button>
-                        </div>
-                    </div>
-                `;
+                
+                const badgeHTML = getVerificationBadgeHTML(post.verification_badge);
+                const likedClass = post.liked ? 'liked' : '';
+                const postId = post.id;
+                
+                let commentsHTML = '';
+                post.comments.forEach(function(comment) {
+                    commentsHTML += '<div class="comment">' +
+                        '<div class="comment-avatar">' + comment.avatar + '</div>' +
+                        '<div class="comment-content">' +
+                        '<div class="comment-author">' + comment.author + '</div>' +
+                        '<div class="comment-text">' + comment.text + '</div>' +
+                        '</div>' +
+                        '</div>';
+                });
+                
+                postElement.innerHTML = '<div class="post-header">' +
+                    '<div class="post-avatar">' + post.avatar + '</div>' +
+                    '<div class="post-info">' +
+                    '<div class="post-author">' + post.author + badgeHTML + '</div>' +
+                    '<div class="post-time">' + post.handle + ' · ' + post.time + '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="post-content">' + post.content + '</div>' +
+                    '<div class="post-stats">' +
+                    '<span>' + post.likes_count + ' likes</span>' +
+                    '<span>' + post.comments_count + ' comments</span>' +
+                    '</div>' +
+                    '<div class="post-actions-row">' +
+                    '<button class="post-action ' + likedClass + '" onclick="toggleLike(\'' + postId + '\')">' +
+                    '<i data-feather="heart"></i> Like' +
+                    '</button>' +
+                    '<button class="post-action" onclick="toggleComments(\'' + postId + '\')">' +
+                    '<i data-feather="message-circle"></i> Comment' +
+                    '</button>' +
+                    '<button class="post-action">' +
+                    '<i data-feather="share-2"></i> Share' +
+                    '</button>' +
+                    '</div>' +
+                    '<div class="comments-section" id="comments-' + postId + '">' +
+                    '<div id="comments-list-' + postId + '">' +
+                    commentsHTML +
+                    '</div>' +
+                    '<div class="comment-input-container">' +
+                    '<input type="text" class="comment-input" id="comment-input-' + postId + '" placeholder="Write a comment...">' +
+                    '<button class="comment-submit" onclick="addComment(\'' + postId + '\')">Post</button>' +
+                    '</div>' +
+                    '</div>';
+                
                 container.appendChild(postElement);
             }
             
@@ -1153,12 +1150,12 @@
         }
 
         function toggleComments(postId) {
-            const commentsSection = document.getElementById(`comments-${postId}`);
+            const commentsSection = document.getElementById('comments-' + postId);
             commentsSection.classList.toggle('show');
         }
 
         async function addComment(postId) {
-            const input = document.getElementById(`comment-input-${postId}`);
+            const input = document.getElementById('comment-input-' + postId);
             const text = input.value.trim();
 
             if (text && currentUser) {
@@ -1176,7 +1173,7 @@
                     input.value = '';
                     await loadPosts();
                     // Keep comments section open
-                    document.getElementById(`comments-${postId}`).classList.add('show');
+                    document.getElementById('comments-' + postId).classList.add('show');
                 }
             }
         }
