@@ -6,8 +6,8 @@
     <title>Feed - Social Stream</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/feather-icons"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -663,78 +663,98 @@
 
         .auth-section {
             background: var(--color-white);
-            padding: 40px;
-            border: 1px solid var(--color-border);
-            margin-bottom: 20px;
             display: none;
-            max-width: 600px;
-            margin: 0 auto;
+            min-height: 100vh;
         }
 
         .auth-section.show {
-            display: block;
+            display: flex;
         }
 
-        .auth-header {
-            text-align: center;
-            margin-bottom: 32px;
+        .auth-split {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
         }
 
-        .auth-logo {
-            width: 50px;
-            height: 50px;
-            background: var(--color-accent);
-            border-radius: 50%;
+        .auth-left {
+            width: 40%;
+            padding-left: 180px;
+            padding-right: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: var(--color-white);
+        }
+
+        .auth-right {
+            width: 60%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--color-white);
-            font-family: var(--font-display);
-            font-size: 28px;
-            font-weight: 700;
-            margin: 0 auto 20px;
+            background: var(--color-white);
         }
 
-        .auth-title {
-            font-family: var(--font-display);
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: var(--color-text);
+        .auth-headline {
+            font-family: 'Inter', sans-serif;
+            font-size: 64px;
+            font-weight: 800;
+            line-height: 1.1;
+            color: #000;
+            margin-bottom: 48px;
         }
 
-        .auth-subtitle {
-            font-size: 14px;
-            color: var(--color-muted);
+        .auth-headline span {
+            display: block;
+        }
+
+        .auth-btn-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-width: 300px;
         }
 
         .auth-social-btn {
             width: 100%;
-            padding: 14px 16px;
-            background: var(--color-white);
-            color: var(--color-text);
-            border: 1px solid var(--color-border);
-            border-radius: 20px;
+            padding: 16px 24px;
+            border-radius: 9999px;
             cursor: pointer;
             font-size: 15px;
             font-weight: 500;
-            margin-bottom: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 12px;
             transition: background 0.2s;
+            border: none;
+            font-family: 'Inter', sans-serif;
         }
 
-        .auth-social-btn:hover {
-            background: var(--color-background);
+        .auth-social-btn.black {
+            background: #000;
+            color: #fff;
+        }
+
+        .auth-social-btn.black:hover {
+            background: #222;
+        }
+
+        .auth-social-btn.white {
+            background: #fff;
+            color: #000;
+            border: 1px solid #e5e7eb;
+        }
+
+        .auth-social-btn.white:hover {
+            background: #f9fafb;
         }
 
         .auth-divider {
             display: flex;
             align-items: center;
             margin: 24px 0;
-            color: var(--color-muted);
+            color: #6b7280;
             font-size: 14px;
         }
 
@@ -743,92 +763,147 @@
             content: '';
             flex: 1;
             height: 1px;
-            background: var(--color-border);
+            background: #e5e7eb;
         }
 
         .auth-divider span {
             padding: 0 16px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .auth-input-wrapper {
+            position: relative;
+            margin-bottom: 16px;
         }
 
         .auth-input {
             width: 100%;
-            padding: 16px;
-            border: 1px solid var(--color-border);
+            padding: 16px 48px 16px 16px;
+            border: 1px solid #e5e7eb;
             border-radius: 4px;
-            font-size: 16px;
-            margin-bottom: 16px;
+            font-size: 15px;
             outline: none;
-            font-family: var(--font-body);
-            background: var(--color-background);
+            font-family: 'Inter', sans-serif;
+            background: #fff;
+            color: #000;
         }
 
         .auth-input:focus {
-            border-color: var(--color-accent);
-            background: var(--color-white);
+            border-color: #000;
         }
 
-        .auth-btn {
+        .auth-input-icon {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            width: 18px;
+            height: 18px;
+        }
+
+        .auth-continue-btn {
             width: 100%;
-            padding: 14px;
-            background: var(--color-accent);
-            color: var(--color-white);
+            padding: 16px;
+            background: #e5e7eb;
+            color: #9ca3af;
             border: none;
-            border-radius: 20px;
-            cursor: pointer;
+            border-radius: 9999px;
+            cursor: not-allowed;
             font-size: 15px;
             font-weight: 600;
-            margin-bottom: 16px;
+            font-family: 'Inter', sans-serif;
         }
 
-        .auth-btn:hover {
-            background: #1d4ed8;
-        }
-
-        .auth-btn:disabled {
-            background: var(--color-border);
-            cursor: not-allowed;
-        }
-
-        .auth-toggle {
-            text-align: center;
-            font-size: 14px;
-            color: var(--color-muted);
-        }
-
-        .auth-toggle a {
-            color: var(--color-accent);
+        .auth-continue-btn.active {
+            background: #000;
+            color: #fff;
             cursor: pointer;
-            text-decoration: none;
         }
 
-        .auth-toggle a:hover {
+        .auth-continue-btn.active:hover {
+            background: #222;
+        }
+
+        .auth-legal {
+            margin-top: 16px;
+            font-size: 11px;
+            color: #6b7280;
+            text-align: center;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.5;
+        }
+
+        .auth-legal a {
+            color: #6b7280;
             text-decoration: underline;
+            font-weight: 600;
         }
 
-        .auth-qr {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 32px;
-            padding-top: 32px;
-            border-top: 1px solid var(--color-border);
-        }
-
-        .auth-qr-text {
-            font-size: 14px;
-            color: var(--color-muted);
-        }
-
-        .auth-qr-code {
-            width: 100px;
-            height: 100px;
-            background: var(--color-background);
+        .auth-brand-logo {
+            width: 200px;
+            height: 200px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            font-size: 12px;
-            color: var(--color-muted);
+        }
+
+        .auth-brand-logo svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .auth-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            background: #fff;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .auth-footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #6b7280;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .auth-footer-links a {
+            color: #6b7280;
+            text-decoration: none;
+        }
+
+        .auth-footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 900px) {
+            .auth-split {
+                flex-direction: column;
+            }
+
+            .auth-left {
+                width: 100%;
+                padding: 40px 20px;
+                padding-left: 20px;
+            }
+
+            .auth-right {
+                display: none;
+            }
+
+            .auth-headline {
+                font-size: 48px;
+            }
+
+            .auth-btn-stack {
+                max-width: 100%;
+            }
         }
     </style>
 </head>
@@ -851,59 +926,64 @@
     </header>
 
     <div id="authPage" style="display: none;">
-        <div class="auth-section show" style="max-width: 600px; margin: 80px auto;">
-            <div id="loginForm">
-                <div class="auth-header">
-                    <div class="auth-logo">F</div>
-                    <h2 class="auth-title">Happening now</h2>
-                    <p class="auth-subtitle">Join Feed today</p>
-                </div>
-                
-                <button class="auth-social-btn">
-                    <i data-feather="smartphone"></i> Continue with phone
-                </button>
-                <button class="auth-social-btn">
-                    <i data-feather="mail"></i> Continue with Google
-                </button>
-                <button class="auth-social-btn">
-                    <i data-feather="apple"></i> Continue with Apple
-                </button>
-                
-                <div class="auth-divider">
-                    <span>or</span>
-                </div>
-                
-                <input type="email" class="auth-input" id="loginEmail" placeholder="Email or username">
-                <input type="password" class="auth-input" id="loginPassword" placeholder="Password">
-                <button class="auth-btn" onclick="signIn()">Continue</button>
-                
-                <div class="auth-toggle">
-                    Don't have an account? <a onclick="toggleAuthMode()">Sign up</a>
-                </div>
-                
-                <div class="auth-qr">
-                    <div class="auth-qr-text">
-                        <p>Scan to get the Feed app</p>
+        <div class="auth-section show">
+            <div class="auth-split">
+                <div class="auth-left">
+                    <h1 class="auth-headline">
+                        <span>Happening</span>
+                        <span>now.</span>
+                    </h1>
+                    <div class="auth-btn-stack">
+                        <button class="auth-social-btn black">
+                            <i data-lucide="phone"></i> Continue with phone
+                        </button>
+                        <button class="auth-social-btn white">
+                            <i data-lucide="mail"></i> Continue with Google
+                        </button>
+                        <button class="auth-social-btn white">
+                            <i data-lucide="apple"></i> Continue with Apple
+                        </button>
+                        
+                        <div class="auth-divider">
+                            <span>or</span>
+                        </div>
+                        
+                        <div class="auth-input-wrapper">
+                            <input type="email" class="auth-input" id="loginEmail" placeholder="Email or username">
+                            <i data-lucide="at-sign" class="auth-input-icon"></i>
+                        </div>
+                        
+                        <button class="auth-continue-btn" id="continueBtn" onclick="showPassword()">Continue</button>
+                        
+                        <div class="auth-legal">
+                            By continuing, you agree to our <a href="#">Terms of Service</a>, <a href="#">Privacy Policy</a> and <a href="#">Cookie Use</a>.
+                        </div>
                     </div>
-                    <div class="auth-qr-code">
-                        QR Code
+                </div>
+                <div class="auth-right">
+                    <div class="auth-brand-logo">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="100" cy="100" r="90" fill="none" stroke="#000" stroke-width="8"/>
+                            <path d="M70 60 L70 140 L130 140 L130 100 L90 100 L90 60 Z" fill="#000"/>
+                        </svg>
                     </div>
                 </div>
             </div>
-            <div id="signupForm" style="display: none;">
-                <div class="auth-header">
-                    <div class="auth-logo">F</div>
-                    <h2 class="auth-title">Join Feed</h2>
-                    <p class="auth-subtitle">Sign up to get started</p>
-                </div>
-                
-                <input type="text" class="auth-input" id="signupName" placeholder="Name">
-                <input type="email" class="auth-input" id="signupEmail" placeholder="Email">
-                <input type="password" class="auth-input" id="signupPassword" placeholder="Password">
-                <button class="auth-btn" onclick="signUp()">Continue</button>
-                
-                <div class="auth-toggle">
-                    Already have an account? <a onclick="toggleAuthMode()">Sign in</a>
+            
+            <div class="auth-footer">
+                <div class="auth-footer-links">
+                    <a href="#">About</a> ·
+                    <a href="#">Get App</a> ·
+                    <a href="#">Help</a> ·
+                    <a href="#">Terms</a> ·
+                    <a href="#">Privacy</a> ·
+                    <a href="#">Cookies</a> ·
+                    <a href="#">Careers</a> ·
+                    <a href="#">Ads & Business</a> ·
+                    <a href="#">Developers</a> ·
+                    <a href="#">News</a> ·
+                    <a href="#">Accessibility</a> ·
+                    © 2026 Feed Corp
                 </div>
             </div>
         </div>
@@ -932,13 +1012,13 @@
                     </div>
                 </div>
                 <ul class="sidebar-menu">
-                    <li class="active"><i data-feather="home"></i> Home</li>
-                    <li><i data-feather="compass"></i> Explore</li>
-                    <li><i data-feather="bell"></i> Notifications</li>
-                    <li><i data-feather="mail"></i> Messages</li>
-                    <li><i data-feather="bookmark"></i> Bookmarks</li>
-                    <li><i data-feather="user"></i> Profile</li>
-                    <li><i data-feather="settings"></i> Settings</li>
+                    <li class="active"><i data-lucide="home"></i> Home</li>
+                    <li><i data-lucide="compass"></i> Explore</li>
+                    <li><i data-lucide="bell"></i> Notifications</li>
+                    <li><i data-lucide="mail"></i> Messages</li>
+                    <li><i data-lucide="bookmark"></i> Bookmarks</li>
+                    <li><i data-lucide="user"></i> Profile</li>
+                    <li><i data-lucide="settings"></i> Settings</li>
                 </ul>
             </aside>
 
@@ -950,9 +1030,9 @@
                     </div>
                     <div class="create-post-actions">
                         <div class="post-actions">
-                            <button class="post-action-btn"><i data-feather="image"></i> Photo</button>
-                            <button class="post-action-btn"><i data-feather="video"></i> Video</button>
-                            <button class="post-action-btn"><i data-feather="smile"></i> Feeling</button>
+                            <button class="post-action-btn"><i data-lucide="image"></i> Photo</button>
+                            <button class="post-action-btn"><i data-lucide="video"></i> Video</button>
+                            <button class="post-action-btn"><i data-lucide="smile"></i> Feeling</button>
                         </div>
                         <button class="post-btn" onclick="createPost()">Post</button>
                     </div>
@@ -1078,18 +1158,28 @@
             document.getElementById('signOutBtn').style.display = 'block';
         }
 
-        function toggleAuthMode() {
-            const loginForm = document.getElementById('loginForm');
-            const signupForm = document.getElementById('signupForm');
-            
-            if (loginForm.style.display === 'none') {
-                loginForm.style.display = 'block';
-                signupForm.style.display = 'none';
-            } else {
-                loginForm.style.display = 'none';
-                signupForm.style.display = 'block';
+        function showPassword() {
+            const email = document.getElementById('loginEmail').value;
+            if (email) {
+                const inputWrapper = document.querySelector('.auth-input-wrapper');
+                inputWrapper.innerHTML = '<input type="password" class="auth-input" id="loginPassword" placeholder="Password"><i data-lucide="lock" class="auth-input-icon"></i>';
+                const continueBtn = document.getElementById('continueBtn');
+                continueBtn.textContent = 'Sign in';
+                continueBtn.onclick = signIn;
+                continueBtn.classList.add('active');
+                lucide.createIcons();
             }
         }
+
+        // Enable continue button when email is entered
+        document.getElementById('loginEmail').addEventListener('input', function() {
+            const continueBtn = document.getElementById('continueBtn');
+            if (this.value) {
+                continueBtn.classList.add('active');
+            } else {
+                continueBtn.classList.remove('active');
+            }
+        });
 
         async function signIn() {
             const email = document.getElementById('loginEmail').value;
@@ -1232,13 +1322,13 @@
                     '</div>' +
                     '<div class="post-actions-row">' +
                     '<button class="post-action ' + likedClass + '" onclick="toggleLike(\'' + postId + '\')">' +
-                    '<i data-feather="heart"></i> Like' +
+                    '<i data-lucide="heart"></i> Like' +
                     '</button>' +
                     '<button class="post-action" onclick="toggleComments(\'' + postId + '\')">' +
-                    '<i data-feather="message-circle"></i> Comment' +
+                    '<i data-lucide="message-circle"></i> Comment' +
                     '</button>' +
                     '<button class="post-action">' +
-                    '<i data-feather="share-2"></i> Share' +
+                    '<i data-lucide="share-2"></i> Share' +
                     '</button>' +
                     '</div>' +
                     '<div class="comments-section" id="comments-' + postId + '">' +
@@ -1254,7 +1344,7 @@
                 container.appendChild(postElement);
             }
             
-            feather.replace();
+            lucide.createIcons();
         }
 
         async function createPost() {
@@ -1339,7 +1429,7 @@
 
         // Initialize on load
         checkSession();
-        feather.replace();
+        lucide.createIcons();
     </script>
 </body>
 </html>
