@@ -998,7 +998,7 @@
                         <span>now.</span>
                     </h1>
                     <div class="auth-btn-stack">
-                        <button class="auth-social-btn black">
+                        <button class="auth-social-btn black" onclick="signInWithGitHub()">
                             <i data-lucide="github"></i> Continue with GitHub
                         </button>
                         
@@ -1021,9 +1021,8 @@
                 <div class="auth-right">
                     <div class="auth-brand-logo">
                         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="100" cy="100" r="95" fill="none" stroke="#2563eb" stroke-width="6"/>
-                            <path d="M65 65 L65 135 L135 135 L135 100 L95 100 L95 65 Z" fill="#2563eb"/>
-                            <path d="M95 65 L95 100 L135 100" stroke="#2563eb" stroke-width="6" fill="none"/>
+                            <rect x="20" y="20" width="160" height="160" rx="32" fill="#2563eb"/>
+                            <text x="100" y="130" font-family="Inter, sans-serif" font-size="80" font-weight="700" fill="white" text-anchor="middle">F</text>
                         </svg>
                     </div>
                 </div>
@@ -1227,6 +1226,19 @@
                 continueBtn.onclick = signIn;
                 continueBtn.classList.add('active');
                 lucide.createIcons();
+            }
+        }
+
+        async function signInWithGitHub() {
+            const { data, error } = await SupabaseClient.auth.signInWithOAuth({
+                provider: 'github',
+                options: {
+                    redirectTo: window.location.href
+                }
+            });
+
+            if (error) {
+                alert('Error signing in with GitHub: ' + error.message);
             }
         }
 
