@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feed - Social Stream</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --color-header: #0f172a;
+            --color-background: #f1f5f9;
+            --color-accent: #2563eb;
+            --color-secondary: #64748b;
+            --color-text: #1e293b;
+            --color-muted: #64748b;
+            --color-white: #ffffff;
+            --color-border: #cbd5e1;
+            --font-display: 'Playfair Display', serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--color-background);
+            color: var(--color-text);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: var(--color-header);
+            color: var(--color-white);
+            padding: 16px 0;
+            border-bottom: 3px solid var(--color-accent);
+        }
+
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--color-accent);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-white);
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-links a {
+            color: var(--color-white);
+            text-decoration: none;
+            padding: 10px 18px;
+            border-radius: 4px;
+            transition: background 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 260px 1fr 280px;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .sidebar {
+            background: var(--color-white);
+            padding: 24px;
+            height: fit-content;
+            border: 1px solid var(--color-border);
+        }
+
+        .profile-card {
+            text-align: center;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--color-border);
+            margin-bottom: 24px;
+        }
+
+        .profile-avatar {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            background: var(--color-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-white);
+            font-family: var(--font-display);
+            font-size: 36px;
+            font-weight: 700;
+            margin: 0 auto 12px;
+        }
+
+        .profile-name {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--color-text);
+        }
+
+        .profile-handle {
+            color: var(--color-muted);
+            font-size: 13px;
+        }
+
+        .profile-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 16px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--color-text);
+        }
+
+        .stat-label {
+            color: var(--color-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            padding: 14px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 14px;
+            color: var(--color-text);
+            margin-bottom: 4px;
+        }
+
+        .sidebar-menu li:hover {
+            background: rgba(199, 91, 57, 0.08);
+        }
+
+        .sidebar-menu li.active {
+            background: var(--color-accent);
+            color: var(--color-white);
+        }
+
+        .sidebar-menu li i {
+            width: 18px;
+            height: 18px;
+        }
+
+        .post-action-btn i {
+            width: 16px;
+            height: 16px;
+        }
+
+        .post-action i {
+            width: 16px;
+            height: 16px;
+        }
+
+        .feed {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        #postsContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .create-post {
+            background: var(--color-white);
+            padding: 24px;
+            border: 1px solid var(--color-border);
+        }
+
+        .create-post-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .create-post-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--color-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-white);
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .create-post-input {
+            flex: 1;
+            padding: 14px 16px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            font-family: var(--font-body);
+            background: var(--color-background);
+        }
+
+        .create-post-input:focus {
+            border-color: var(--color-accent);
+            background: var(--color-white);
+        }
+
+        .create-post-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .post-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border: none;
+            background: var(--color-background);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--color-muted);
+            transition: background 0.2s;
+        }
+
+        .post-action-btn:hover {
+            background: rgba(199, 91, 57, 0.12);
+            color: var(--color-accent);
+        }
+
+        .post-btn {
+            padding: 10px 28px;
+            background: var(--color-accent);
+            color: var(--color-white);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .post-btn:hover {
+            background: #b04a2e;
+        }
+
+        .post {
+            background: var(--color-white);
+            padding: 24px;
+            border: 1px solid var(--color-border);
+            transition: border-color 0.2s;
+            position: relative;
+        }
+
+        .post:hover {
+            border-color: var(--color-accent);
+        }
+
+        .post:hover::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 1px solid var(--color-accent);
+            opacity: 0.3;
+            pointer-events: none;
+            border-radius: 0;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .post-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--color-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-white);
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .post-info {
+            flex: 1;
+        }
+
+        .post-author {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--color-text);
+        }
+
+        .post-time {
+            color: var(--color-muted);
+            font-size: 12px;
+        }
+
+        .post-content {
+            margin-bottom: 16px;
+            line-height: 1.6;
+            color: var(--color-text);
+            font-size: 15px;
+        }
+
+        .post-image {
+            width: 100%;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .post-image.has-image {
+            display: block;
+        }
+
+        .post-stats {
+            display: flex;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-top: 1px solid var(--color-border);
+            border-bottom: 1px solid var(--color-border);
+            color: var(--color-muted);
+            font-size: 13px;
+        }
+
+        .post-actions-row {
+            display: flex;
+            justify-content: space-around;
+            padding-top: 14px;
+        }
+
+        .post-action {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--color-muted);
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .post-action:hover {
+            background: rgba(199, 91, 57, 0.08);
+            color: var(--color-accent);
+        }
+
+        .post-action.liked {
+            color: var(--color-accent);
+        }
+
+        .comments-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--color-border);
+            display: none;
+        }
+
+        .comments-section.show {
+            display: block;
+        }
+
+        .comment {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .comment-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--color-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-white);
+            font-family: var(--font-display);
+            font-size: 14px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .comment-content {
+            flex: 1;
+            background: var(--color-background);
+            padding: 12px 16px;
+            border-radius: 4px;
+        }
+
+        .comment-author {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--color-text);
+        }
+
+        .comment-text {
+            font-size: 14px;
+            margin-top: 4px;
+            color: var(--color-text);
+        }
+
+        .comment-input-container {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .comment-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+            background: var(--color-background);
+        }
+
+        .comment-input:focus {
+            border-color: var(--color-accent);
+            background: var(--color-white);
+        }
+
+        .comment-submit {
+            padding: 10px 24px;
+            background: var(--color-accent);
+            color: var(--color-white);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .comment-submit:hover {
+            background: #b04a2e;
+        }
+
+        .right-sidebar {
+            background: var(--color-white);
+            padding: 24px;
+            border: 1px solid var(--color-border);
+            height: fit-content;
+        }
+
+        .right-sidebar h3 {
+            font-family: var(--font-display);
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: var(--color-text);
+            font-weight: 600;
+        }
+
+        .suggestion {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .suggestion:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--color-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-white);
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .suggestion-info {
+            flex: 1;
+        }
+
+        .suggestion-name {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--color-text);
+        }
+
+        .suggestion-handle {
+            color: var(--color-muted);
+            font-size: 12px;
+        }
+
+        .follow-btn {
+            padding: 8px 16px;
+            background: var(--color-accent);
+            color: var(--color-white);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .follow-btn.following {
+            background: var(--color-background);
+            color: var(--color-muted);
+        }
+
+        .follow-btn:hover:not(.following) {
+            background: #b04a2e;
+        }
+
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar, .right-sidebar {
+                display: none;
+            }
+        }
+
+        .trending {
+            margin-top: 24px;
+        }
+
+        .trending-item {
+            padding: 14px 0;
+            border-bottom: 1px solid var(--color-border);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .trending-item:last-child {
+            border-bottom: none;
+        }
+
+        .trending-item:hover .trending-topic {
+            color: var(--color-accent);
+        }
+
+        .trending-topic {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--color-text);
+        }
+
+        .trending-posts {
+            color: var(--color-muted);
+            font-size: 12px;
+        }
+
+        .verification-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            margin-left: 4px;
+        }
+
+        .verification-badge svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .verification-badge.blue svg path {
+            fill: var(--color-accent);
+        }
+
+        .verification-badge.gold svg path {
+            fill: #f59e0b;
+        }
+
+        .auth-section {
+            background: var(--color-white);
+            padding: 24px;
+            border: 1px solid var(--color-border);
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .auth-section.show {
+            display: block;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 12px;
+            outline: none;
+            font-family: var(--font-body);
+        }
+
+        .auth-input:focus {
+            border-color: var(--color-accent);
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--color-accent);
+            color: var(--color-white);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .auth-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .auth-toggle {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--color-muted);
+        }
+
+        .auth-toggle a {
+            color: var(--color-accent);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <div class="logo-icon">F</div>
+                Feed
+            </div>
+            <nav class="nav-links">
+                <a href="#">Home</a>
+                <a href="#">Explore</a>
+                <a href="#">Notifications</a>
+                <a href="#">Messages</a>
+                <a href="#">Profile</a>
+                <a href="#" id="signOutBtn" style="display: none;" onclick="signOut()">Sign Out</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="main-content">
+            <aside class="sidebar">
+                <div class="profile-card">
+                    <div class="profile-avatar">JD</div>
+                    <div class="profile-name">John Doe</div>
+                    <div class="profile-handle">@johndoe</div>
+                    <div class="profile-stats">
+                        <div class="stat">
+                            <div class="stat-number">142</div>
+                            <div class="stat-label">Posts</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">2.5K</div>
+                            <div class="stat-label">Followers</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">890</div>
+                            <div class="stat-label">Following</div>
+                        </div>
+                    </div>
+                </div>
+                <ul class="sidebar-menu">
+                    <li class="active"><i data-feather="home"></i> Home</li>
+                    <li><i data-feather="compass"></i> Explore</li>
+                    <li><i data-feather="bell"></i> Notifications</li>
+                    <li><i data-feather="mail"></i> Messages</li>
+                    <li><i data-feather="bookmark"></i> Bookmarks</li>
+                    <li><i data-feather="user"></i> Profile</li>
+                    <li><i data-feather="settings"></i> Settings</li>
+                </ul>
+            </aside>
+
+            <main class="feed">
+                <div class="auth-section" id="authSection">
+                    <div id="loginForm">
+                        <h3 style="margin-bottom: 16px; font-family: var(--font-display);">Sign In</h3>
+                        <input type="email" class="auth-input" id="loginEmail" placeholder="Email">
+                        <input type="password" class="auth-input" id="loginPassword" placeholder="Password">
+                        <button class="auth-btn" onclick="signIn()">Sign In</button>
+                        <div class="auth-toggle">
+                            Don't have an account? <a onclick="toggleAuthMode()">Sign Up</a>
+                        </div>
+                    </div>
+                    <div id="signupForm" style="display: none;">
+                        <h3 style="margin-bottom: 16px; font-family: var(--font-display);">Sign Up</h3>
+                        <input type="email" class="auth-input" id="signupEmail" placeholder="Email">
+                        <input type="password" class="auth-input" id="signupPassword" placeholder="Password">
+                        <input type="text" class="auth-input" id="signupName" placeholder="Full Name">
+                        <button class="auth-btn" onclick="signUp()">Sign Up</button>
+                        <div class="auth-toggle">
+                            Already have an account? <a onclick="toggleAuthMode()">Sign In</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="create-post" id="createPostSection" style="display: none;">
+                    <div class="create-post-header">
+                        <div class="create-post-avatar">JD</div>
+                        <textarea class="create-post-input" id="postInput" placeholder="What's on your mind, John?" rows="3"></textarea>
+                    </div>
+                    <div class="create-post-actions">
+                        <div class="post-actions">
+                            <button class="post-action-btn"><i data-feather="image"></i> Photo</button>
+                            <button class="post-action-btn"><i data-feather="video"></i> Video</button>
+                            <button class="post-action-btn"><i data-feather="smile"></i> Feeling</button>
+                        </div>
+                        <button class="post-btn" onclick="createPost()">Post</button>
+                    </div>
+                </div>
+
+                <div id="postsContainer">
+                    <!-- Posts will be dynamically added here -->
+                </div>
+            </main>
+
+            <aside class="right-sidebar">
+                <h3>Who to follow</h3>
+                <div class="suggestion">
+                    <div class="suggestion-avatar">JS</div>
+                    <div class="suggestion-info">
+                        <div class="suggestion-name">Jane Smith</div>
+                        <div class="suggestion-handle">@janesmith</div>
+                    </div>
+                    <button class="follow-btn" onclick="toggleFollow(this)">Follow</button>
+                </div>
+                <div class="suggestion">
+                    <div class="suggestion-avatar">MJ</div>
+                    <div class="suggestion-info">
+                        <div class="suggestion-name">Mike Johnson</div>
+                        <div class="suggestion-handle">@mikej</div>
+                    </div>
+                    <button class="follow-btn" onclick="toggleFollow(this)">Follow</button>
+                </div>
+                <div class="suggestion">
+                    <div class="suggestion-avatar">SW</div>
+                    <div class="suggestion-info">
+                        <div class="suggestion-name">Sarah Wilson</div>
+                        <div class="suggestion-handle">@sarahw</div>
+                    </div>
+                    <button class="follow-btn" onclick="toggleFollow(this)">Follow</button>
+                </div>
+
+                <div class="trending">
+                    <h3>Trending Topics</h3>
+                    <div class="trending-item">
+                        <div class="trending-topic">#TechNews</div>
+                        <div class="trending-posts">12.5K posts</div>
+                    </div>
+                    <div class="trending-item">
+                        <div class="trending-topic">#WebDevelopment</div>
+                        <div class="trending-posts">8.2K posts</div>
+                    </div>
+                    <div class="trending-item">
+                        <div class="trending-topic">#AI</div>
+                        <div class="trending-posts">15.8K posts</div>
+                    </div>
+                    <div class="trending-item">
+                        <div class="trending-topic">#Coding</div>
+                        <div class="trending-posts">6.3K posts</div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Supabase client with custom naming to avoid conflicts
+        const SupabaseClient = supabase.createClient(
+            'https://mfjtdrqvmuwtoarkiezi.supabase.co',
+            'sb_publishable_SPhsUI31nYbrrLjPBAaRBw_OkWQ2_Xn'
+        );
+
+        let currentUser = null;
+        let currentUserProfile = null;
+        let posts = [];
+
+        // Check for existing session on load
+        async function checkSession() {
+            const { data: { session } } = await SupabaseClient.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                await loadUserProfile();
+                showAuthenticatedUI();
+                await loadPosts();
+            } else {
+                showAuthUI();
+            }
+        }
+
+        async function loadUserProfile() {
+            const { data, error } = await SupabaseClient
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+            
+            if (data) {
+                currentUserProfile = data;
+                updateProfileUI();
+            }
+        }
+
+        function updateProfileUI() {
+            if (currentUserProfile) {
+                document.querySelector('.profile-avatar').textContent = getInitials(currentUserProfile.full_name || currentUserProfile.username);
+                document.querySelector('.profile-name').textContent = currentUserProfile.full_name || currentUserProfile.username;
+                document.querySelector('.profile-handle').textContent = '@' + currentUserProfile.username;
+                document.querySelector('.create-post-avatar').textContent = getInitials(currentUserProfile.full_name || currentUserProfile.username);
+                document.querySelector('.create-post-input').placeholder = `What's on your mind, ${currentUserProfile.full_name || currentUserProfile.username}?`;
+            }
+        }
+
+        function getInitials(name) {
+            return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        }
+
+        function showAuthUI() {
+            document.getElementById('authSection').classList.add('show');
+            document.getElementById('createPostSection').style.display = 'none';
+            document.getElementById('signOutBtn').style.display = 'none';
+        }
+
+        function showAuthenticatedUI() {
+            document.getElementById('authSection').classList.remove('show');
+            document.getElementById('createPostSection').style.display = 'block';
+            document.getElementById('signOutBtn').style.display = 'block';
+        }
+
+        function toggleAuthMode() {
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            
+            if (loginForm.style.display === 'none') {
+                loginForm.style.display = 'block';
+                signupForm.style.display = 'none';
+            } else {
+                loginForm.style.display = 'none';
+                signupForm.style.display = 'block';
+            }
+        }
+
+        async function signIn() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const { data, error } = await SupabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (error) {
+                alert('Error signing in: ' + error.message);
+            } else {
+                currentUser = data.user;
+                await loadUserProfile();
+                showAuthenticatedUI();
+                await loadPosts();
+            }
+        }
+
+        async function signUp() {
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const fullName = document.getElementById('signupName').value;
+
+            const { data, error } = await SupabaseClient.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                    data: {
+                        full_name: fullName
+                    }
+                }
+            });
+
+            if (error) {
+                alert('Error signing up: ' + error.message);
+            } else {
+                if (data.user && !data.session) {
+                    alert('Please check your email to confirm your account');
+                } else {
+                    currentUser = data.user;
+                    await loadUserProfile();
+                    showAuthenticatedUI();
+                    await loadPosts();
+                }
+            }
+        }
+
+        async function signOut() {
+            await SupabaseClient.auth.signOut();
+            currentUser = null;
+            currentUserProfile = null;
+            posts = [];
+            showAuthUI();
+            document.getElementById('postsContainer').innerHTML = '';
+        }
+
+        async function loadPosts() {
+            const { data, error } = await SupabaseClient
+                .from('posts')
+                .select(`
+                    *,
+                    profiles:user_id (username, full_name, verification_badge),
+                    likes(user_id),
+                    comments(
+                        id,
+                        content,
+                        created_at,
+                        profiles:user_id (username, full_name)
+                    )
+                )
+                .order('created_at', { ascending: false });
+
+            if (data) {
+                posts = data.map(post => ({
+                    ...post,
+                    author: post.profiles.full_name || post.profiles.username,
+                    handle: '@' + post.profiles.username,
+                    avatar: getInitials(post.profiles.full_name || post.profiles.username),
+                    verification_badge: post.profiles.verification_badge,
+                    time: formatTime(post.created_at),
+                    liked: post.likes.some(like => like.user_id === currentUser?.id),
+                    comments: post.comments.map(comment => ({
+                        id: comment.id,
+                        author: comment.profiles.full_name || comment.profiles.username,
+                        avatar: getInitials(comment.profiles.full_name || comment.profiles.username),
+                        text: comment.content
+                    }))
+                }));
+                renderPosts();
+            }
+        }
+
+        function formatTime(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return diffMins + ' minutes ago';
+            if (diffHours < 24) return diffHours + ' hours ago';
+            if (diffDays < 7) return diffDays + ' days ago';
+            return date.toLocaleDateString();
+        }
+
+        function getVerificationBadgeHTML(badge) {
+            if (!badge) return '';
+            const svg = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 122.881 122.88"><g><path fill-rule="evenodd" clip-rule="evenodd" d="M61.44,0c33.933,0,61.441,27.507,61.441,61.439 c0,33.933-27.508,61.44-61.441,61.44C27.508,122.88,0,95.372,0,61.439C0,27.507,27.508,0,61.44,0L61.44,0z M34.106,67.678 l-0.015-0.014c-0.785-0.718-1.207-1.685-1.256-2.669c-0.049-0.982,0.275-1.985,0.984-2.777c0.01-0.011,0.019-0.021,0.029-0.031 c0.717-0.784,1.684-1.207,2.668-1.256c0.989-0.049,1.998,0.28,2.792,0.998l12.956,11.748l31.089-32.559v0 c0.74-0.776,1.723-1.18,2.719-1.204c0.992-0.025,1.994,0.329,2.771,1.067v0.001c0.777,0.739,1.18,1.724,1.205,2.718 c0.025,0.993-0.33,1.997-1.068,2.773L55.279,81.769c-0.023,0.024-0.048,0.047-0.073,0.067c-0.715,0.715-1.649,1.095-2.598,1.13 c-0.974,0.037-1.963-0.293-2.744-1L34.118,67.688L34.106,67.678L34.106,67.678L34.106,67.678z"/></g></svg>`;
+            return `<span class="verification-badge ${badge}">${svg}</span>`;
+        }
+
+        async function renderPosts() {
+            const container = document.getElementById('postsContainer');
+            container.innerHTML = '';
+
+            for (const post of posts) {
+                const postElement = document.createElement('div');
+                postElement.className = 'post';
+                postElement.innerHTML = `
+                    <div class="post-header">
+                        <div class="post-avatar">${post.avatar}</div>
+                        <div class="post-info">
+                            <div class="post-author">${post.author}${getVerificationBadgeHTML(post.verification_badge)}</div>
+                            <div class="post-time">${post.handle} · ${post.time}</div>
+                        </div>
+                    </div>
+                    <div class="post-content">${post.content}</div>
+                    <div class="post-stats">
+                        <span>${post.likes_count} likes</span>
+                        <span>${post.comments_count} comments</span>
+                    </div>
+                    <div class="post-actions-row">
+                        <button class="post-action ${post.liked ? 'liked' : ''}" onclick="toggleLike('${post.id}')">
+                            <i data-feather="${post.liked ? 'heart' : 'heart'}"></i> Like
+                        </button>
+                        <button class="post-action" onclick="toggleComments('${post.id}')">
+                            <i data-feather="message-circle"></i> Comment
+                        </button>
+                        <button class="post-action">
+                            <i data-feather="share-2"></i> Share
+                        </button>
+                    </div>
+                    <div class="comments-section" id="comments-${post.id}">
+                        <div id="comments-list-${post.id}">
+                            ${post.comments.map(comment => `
+                                <div class="comment">
+                                    <div class="comment-avatar">${comment.avatar}</div>
+                                    <div class="comment-content">
+                                        <div class="comment-author">${comment.author}</div>
+                                        <div class="comment-text">${comment.text}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="comment-input-container">
+                            <input type="text" class="comment-input" id="comment-input-${post.id}" placeholder="Write a comment...">
+                            <button class="comment-submit" onclick="addComment('${post.id}')">Post</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(postElement);
+            }
+            
+            feather.replace();
+        }
+
+        async function createPost() {
+            const input = document.getElementById('postInput');
+            const content = input.value.trim();
+
+            if (content && currentUser) {
+                const { data, error } = await SupabaseClient
+                    .from('posts')
+                    .insert({
+                        user_id: currentUser.id,
+                        content: content
+                    })
+                    .select()
+                    .single();
+
+                if (error) {
+                    alert('Error creating post: ' + error.message);
+                } else {
+                    input.value = '';
+                    await loadPosts();
+                }
+            }
+        }
+
+        async function toggleLike(postId) {
+            if (!currentUser) return;
+
+            const post = posts.find(p => p.id === postId);
+            if (post.liked) {
+                // Unlike
+                await SupabaseClient
+                    .from('likes')
+                    .delete()
+                    .eq('post_id', postId)
+                    .eq('user_id', currentUser.id);
+            } else {
+                // Like
+                await SupabaseClient
+                    .from('likes')
+                    .insert({
+                        post_id: postId,
+                        user_id: currentUser.id
+                    });
+            }
+            await loadPosts();
+        }
+
+        function toggleComments(postId) {
+            const commentsSection = document.getElementById(`comments-${postId}`);
+            commentsSection.classList.toggle('show');
+        }
+
+        async function addComment(postId) {
+            const input = document.getElementById(`comment-input-${postId}`);
+            const text = input.value.trim();
+
+            if (text && currentUser) {
+                const { error } = await SupabaseClient
+                    .from('comments')
+                    .insert({
+                        post_id: postId,
+                        user_id: currentUser.id,
+                        content: text
+                    });
+
+                if (error) {
+                    alert('Error adding comment: ' + error.message);
+                } else {
+                    input.value = '';
+                    await loadPosts();
+                    // Keep comments section open
+                    document.getElementById(`comments-${postId}`).classList.add('show');
+                }
+            }
+        }
+
+        function toggleFollow(button) {
+            button.classList.toggle('following');
+            button.textContent = button.classList.contains('following') ? 'Following' : 'Follow';
+        }
+
+        // Initialize on load
+        checkSession();
+        feather.replace();
+    </script>
+</body>
+</html>
