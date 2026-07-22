@@ -850,7 +850,66 @@
         </div>
     </header>
 
-    <div class="container">
+    <div id="authPage" style="display: none;">
+        <div class="auth-section show" style="max-width: 600px; margin: 80px auto;">
+            <div id="loginForm">
+                <div class="auth-header">
+                    <div class="auth-logo">F</div>
+                    <h2 class="auth-title">Happening now</h2>
+                    <p class="auth-subtitle">Join Feed today</p>
+                </div>
+                
+                <button class="auth-social-btn">
+                    <i data-feather="smartphone"></i> Continue with phone
+                </button>
+                <button class="auth-social-btn">
+                    <i data-feather="mail"></i> Continue with Google
+                </button>
+                <button class="auth-social-btn">
+                    <i data-feather="apple"></i> Continue with Apple
+                </button>
+                
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+                
+                <input type="email" class="auth-input" id="loginEmail" placeholder="Email or username">
+                <input type="password" class="auth-input" id="loginPassword" placeholder="Password">
+                <button class="auth-btn" onclick="signIn()">Continue</button>
+                
+                <div class="auth-toggle">
+                    Don't have an account? <a onclick="toggleAuthMode()">Sign up</a>
+                </div>
+                
+                <div class="auth-qr">
+                    <div class="auth-qr-text">
+                        <p>Scan to get the Feed app</p>
+                    </div>
+                    <div class="auth-qr-code">
+                        QR Code
+                    </div>
+                </div>
+            </div>
+            <div id="signupForm" style="display: none;">
+                <div class="auth-header">
+                    <div class="auth-logo">F</div>
+                    <h2 class="auth-title">Join Feed</h2>
+                    <p class="auth-subtitle">Sign up to get started</p>
+                </div>
+                
+                <input type="text" class="auth-input" id="signupName" placeholder="Name">
+                <input type="email" class="auth-input" id="signupEmail" placeholder="Email">
+                <input type="password" class="auth-input" id="signupPassword" placeholder="Password">
+                <button class="auth-btn" onclick="signUp()">Continue</button>
+                
+                <div class="auth-toggle">
+                    Already have an account? <a onclick="toggleAuthMode()">Sign in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="mainApp">
         <div class="main-content">
             <aside class="sidebar">
                 <div class="profile-card">
@@ -884,63 +943,6 @@
             </aside>
 
             <main class="feed">
-                <div class="auth-section" id="authSection">
-                    <div id="loginForm">
-                        <div class="auth-header">
-                            <div class="auth-logo">F</div>
-                            <h2 class="auth-title">Happening now</h2>
-                            <p class="auth-subtitle">Join Feed today</p>
-                        </div>
-                        
-                        <button class="auth-social-btn">
-                            <i data-feather="smartphone"></i> Continue with phone
-                        </button>
-                        <button class="auth-social-btn">
-                            <i data-feather="mail"></i> Continue with Google
-                        </button>
-                        <button class="auth-social-btn">
-                            <i data-feather="apple"></i> Continue with Apple
-                        </button>
-                        
-                        <div class="auth-divider">
-                            <span>or</span>
-                        </div>
-                        
-                        <input type="email" class="auth-input" id="loginEmail" placeholder="Email or username">
-                        <input type="password" class="auth-input" id="loginPassword" placeholder="Password">
-                        <button class="auth-btn" onclick="signIn()">Continue</button>
-                        
-                        <div class="auth-toggle">
-                            Don't have an account? <a onclick="toggleAuthMode()">Sign up</a>
-                        </div>
-                        
-                        <div class="auth-qr">
-                            <div class="auth-qr-text">
-                                <p>Scan to get the Feed app</p>
-                            </div>
-                            <div class="auth-qr-code">
-                                QR Code
-                            </div>
-                        </div>
-                    </div>
-                    <div id="signupForm" style="display: none;">
-                        <div class="auth-header">
-                            <div class="auth-logo">F</div>
-                            <h2 class="auth-title">Join Feed</h2>
-                            <p class="auth-subtitle">Sign up to get started</p>
-                        </div>
-                        
-                        <input type="text" class="auth-input" id="signupName" placeholder="Name">
-                        <input type="email" class="auth-input" id="signupEmail" placeholder="Email">
-                        <input type="password" class="auth-input" id="signupPassword" placeholder="Password">
-                        <button class="auth-btn" onclick="signUp()">Continue</button>
-                        
-                        <div class="auth-toggle">
-                            Already have an account? <a onclick="toggleAuthMode()">Sign in</a>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="create-post" id="createPostSection" style="display: none;">
                     <div class="create-post-header">
                         <div class="create-post-avatar">JD</div>
@@ -1063,13 +1065,15 @@
         }
 
         function showAuthUI() {
-            document.getElementById('authSection').classList.add('show');
-            document.getElementById('createPostSection').style.display = 'none';
-            document.getElementById('signOutBtn').style.display = 'none';
+            document.getElementById('authPage').style.display = 'block';
+            document.getElementById('mainApp').style.display = 'none';
+            document.querySelector('header').style.display = 'none';
         }
 
         function showAuthenticatedUI() {
-            document.getElementById('authSection').classList.remove('show');
+            document.getElementById('authPage').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            document.querySelector('header').style.display = 'block';
             document.getElementById('createPostSection').style.display = 'block';
             document.getElementById('signOutBtn').style.display = 'block';
         }
